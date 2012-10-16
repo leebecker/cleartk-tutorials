@@ -15,8 +15,9 @@ public class DumpTweetPos extends JCasAnnotator_ImplBase {
 		for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
 			System.out.println(sentence.getCoveredText());
 			for (Token token : JCasUtil.selectCovered(jCas, Token.class, sentence)) {
-				System.out.println(token.getCoveredText() + "/" + token.getPos());
+				System.out.printf("%s/%s ", token.getCoveredText(), token.getPos());
 			}
+			System.out.println();
 			System.out.println();
 		}
 	}

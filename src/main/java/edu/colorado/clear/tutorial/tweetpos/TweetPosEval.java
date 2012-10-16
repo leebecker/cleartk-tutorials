@@ -100,12 +100,14 @@ public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics
 	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(TweetPosTagger.class, 
 	            GenericJarClassifierFactory.PARAM_CLASSIFIER_JAR_PATH,
 	            new File(directory, "model.jar").getPath()));
-	    
-	    AnalysisEngine engine = builder.createAggregate();
+
+	    // Create an object to keep track of accuracy, precision, recall, etc.
 	    AnnotationStatistics<String> stats = new AnnotationStatistics<String>();
+	    Function<Token, ?> getSpan = AnnotationStatistics.annotationToSpan();
+	    Function<Token, String> getPos = AnnotationStatistics.annotationToFeatureValue("pos");
 	    
 	    // Run aggregate engine over data from reader, and collect evaluation stats
-	    for (JCas jCas : new JCasIterable(reader, engine)) {
+	    for (JCas jCas : new JCasIterable(reader, builder.createAggregate())) {
 	    	JCas goldView;
 	    	JCas systemView;
 	    	try {
@@ -115,12 +117,9 @@ public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics
 	    		throw new AnalysisEngineProcessException(e);
 	    	}
 
-	    	Function<Token, ?> spanLookup = AnnotationStatistics.annotationToSpan();
-	    	Function<Token, String> tokenToPos = AnnotationStatistics.annotationToFeatureValue("pos");
-
 	    	Collection<Token> goldTokens = JCasUtil.select(goldView, Token.class);
 	    	Collection<Token> systemTokens = JCasUtil.select(systemView, Token.class);
-	    	stats.add(goldTokens, systemTokens, spanLookup, tokenToPos);
+	    	stats.add(goldTokens, systemTokens, getSpan, getPos);
 	    }
 	
 	    return stats;

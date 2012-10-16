@@ -11,11 +11,10 @@ import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.resource.ResourceInitializationException;
 import org.cleartk.classifier.jar.DefaultDataWriterFactory;
 import org.cleartk.classifier.jar.DirectoryDataWriterFactory;
 import org.cleartk.classifier.jar.GenericJarClassifierFactory;
-import org.cleartk.classifier.jar.JarClassifierBuilder;
+import org.cleartk.classifier.jar.Train;
 import org.cleartk.classifier.opennlp.MaxentStringOutcomeDataWriter;
 import org.cleartk.eval.AnnotationStatistics;
 import org.cleartk.eval.Evaluation_ImplBase;
@@ -36,25 +35,13 @@ import com.google.common.base.Function;
 public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics<String>> {
 	
 	
-	public static enum AnnotatorMode {
-		TRAIN, TEST, CLASSIFY
-	}
-	
 	private static final String GOLD_VIEW_NAME = "TweetPosGoldView";
 	
 	private static final String SYSTEM_VIEW_NAME = CAS.NAME_DEFAULT_SOFA;
 
-	private List<String> trainingArguments;
-
 
 	public TweetPosEval(File baseDirectory) {
 		super(baseDirectory);
-		this.trainingArguments = Arrays.<String>asList();
-	}
-
-	public TweetPosEval(File baseDirectory, List<String> trainingArguments) {
-		super(baseDirectory);
-		this.trainingArguments = trainingArguments;
 	}
 
 	@Override
@@ -67,7 +54,46 @@ public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics
 	protected AnnotationStatistics<String> test(CollectionReader reader, File directory)
 			throws Exception {
 		
-	    AggregateBuilder builder = createPreProcessingAggregate(AnnotatorMode.TEST); 
+	    AggregateBuilder builder = new AggregateBuilder();
+	    
+	    // Read contents of file in CONLL view
+	    builder.add(UriToDocumentTextAnnotator.getDescriptionForView(TweetPosReaderAnnotator.TWEET_POS_CONLL_VIEW));
+	    
+	    
+	    // Ensure views are created
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+	    				ViewCreatorAnnotator.class, 
+	    				ViewCreatorAnnotator.PARAM_VIEW_NAME, 
+	    				GOLD_VIEW_NAME));
+
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(
+	    				ViewCreatorAnnotator.class, 
+	    				ViewCreatorAnnotator.PARAM_VIEW_NAME, 
+	    				SYSTEM_VIEW_NAME));
+
+
+	    // Parse CONLL text with POS tags into Gold View 
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(TweetPosReaderAnnotator.class), 
+	    		CAS.NAME_DEFAULT_SOFA,
+	    		GOLD_VIEW_NAME
+	    		);
+
+	    // Copy text from gold view into the system view
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(ViewTextCopierAnnotator.class, 
+	    				ViewTextCopierAnnotator.PARAM_SOURCE_VIEW_NAME,
+	    				GOLD_VIEW_NAME,
+	    				ViewTextCopierAnnotator.PARAM_DESTINATION_VIEW_NAME,
+	    				SYSTEM_VIEW_NAME));
+
+
+	    // Copy sentences and tokens from the gold view into the system view
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(CopySentenceAndTokenAnnotations.class, 
+	    				CopySentenceAndTokenAnnotations.PARAM_SOURCE_VIEW_NAME,
+	    				GOLD_VIEW_NAME,
+	    				CopySentenceAndTokenAnnotations.PARAM_DESTINATION_VIEW_NAME,
+	    				SYSTEM_VIEW_NAME,
+	    				CopySentenceAndTokenAnnotations.PARAM_COPY_POS_TAGS,
+	    				false));
 	    
 	    
 	    // Create POS tagger configured for classification
@@ -102,8 +128,14 @@ public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics
 
 	@Override
 	protected void train(CollectionReader reader, File directory) throws Exception {
-	    AggregateBuilder builder = createPreProcessingAggregate(AnnotatorMode.TRAIN); 
+		AggregateBuilder builder = new AggregateBuilder();
+		
+		// Read text from URI location
+	    builder.add(UriToDocumentTextAnnotator.getDescriptionForView(TweetPosReaderAnnotator.TWEET_POS_CONLL_VIEW));
 	    
+	    // Parse tweet POS CONLL format into plain text within
+	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(TweetPosReaderAnnotator.class));
+
 	    // Create POS tagger configured for training
 	    builder.add(AnalysisEngineFactory.createPrimitiveDescription(TweetPosTagger.class, 
 	            DefaultDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME,
@@ -112,69 +144,12 @@ public class TweetPosEval extends Evaluation_ImplBase<File, AnnotationStatistics
 	            directory.getPath())
 	    );
 	    
+	    // Run the pipeline.  This should output your training data in the output directory
 	    SimplePipeline.runPipeline(reader, builder.createAggregateDescription());
 	    
-	    JarClassifierBuilder.trainAndPackage(directory, 
-	    		this.trainingArguments.toArray(new String[this.trainingArguments.size()]));
-	    		
-	}
-
-	private AggregateBuilder createPreProcessingAggregate(AnnotatorMode mode)
-			throws ResourceInitializationException {
-		AggregateBuilder builder = new AggregateBuilder();
 	    
-	    // Read contents of file in CONLL view
-	    builder.add(UriToDocumentTextAnnotator.getDescriptionForView(TweetPosReaderAnnotator.TWEET_POS_CONLL_VIEW));
-	    
-	    switch (mode) {
-	    	case TRAIN:
-	    		// Parse tweet POS CONLL format into plain text within
-	    		builder.add(AnalysisEngineFactory.createPrimitiveDescription(TweetPosReaderAnnotator.class));
-	    		break;
-	    		
-	        case TEST:
-	        	// Ensure views are created
-	        	builder.add(
-	        			AnalysisEngineFactory.createPrimitiveDescription(
-	        					ViewCreatorAnnotator.class, 
-	        					ViewCreatorAnnotator.PARAM_VIEW_NAME, 
-	        					GOLD_VIEW_NAME));
-	        	
-	        	builder.add(
-	        			AnalysisEngineFactory.createPrimitiveDescription(
-	        					ViewCreatorAnnotator.class, 
-	        					ViewCreatorAnnotator.PARAM_VIEW_NAME, 
-	        					SYSTEM_VIEW_NAME));
-	        			
-	       	
-	        	// Parse CONLL text with POS tags into Gold View 
-	        	builder.add(
-	        		AnalysisEngineFactory.createPrimitiveDescription(TweetPosReaderAnnotator.class), 
-	        		CAS.NAME_DEFAULT_SOFA,
-	        		GOLD_VIEW_NAME
-	        	);
-	        	
-	        	// Copy text from gold view into the system view
-	        	builder.add(
-	        			AnalysisEngineFactory.createPrimitiveDescription(ViewTextCopierAnnotator.class, 
-	        					ViewTextCopierAnnotator.PARAM_SOURCE_VIEW_NAME,
-	        					GOLD_VIEW_NAME,
-	        					ViewTextCopierAnnotator.PARAM_DESTINATION_VIEW_NAME,
-	        					SYSTEM_VIEW_NAME));
-	        	
-	        	
-	        	// Copy sentences and tokens from the gold view into the system view
-	        	builder.add(
-	        		AnalysisEngineFactory.createPrimitiveDescription(CopySentenceAndTokenAnnotations.class, 
-	        				CopySentenceAndTokenAnnotations.PARAM_SOURCE_VIEW_NAME,
-	        				GOLD_VIEW_NAME,
-	        				CopySentenceAndTokenAnnotations.PARAM_DESTINATION_VIEW_NAME,
-	        				SYSTEM_VIEW_NAME,
-	        				CopySentenceAndTokenAnnotations.PARAM_COPY_POS_TAGS,
-	        				false));
-	    }
-
-		return builder;
+	    // Train and package the model
+	    Train.main(directory);
 	}
 
 	

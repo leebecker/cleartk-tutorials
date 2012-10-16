@@ -40,11 +40,6 @@ Step 3: Download and copy necessary files:
 
 
 
-
-
-
-
-
 Step 1: Create a new Maven project
 
 File->New Project->Maven Project
@@ -112,16 +107,63 @@ your DumpTweetPos annotator.
 * Create a new class called RunDumpTweetPos, check public static void(main String[] args) before clicking Finish
 * Look at the signatures for SimplePipeline.runPipeline(...).  
   - What do you need to call this method?
-* Use the CollectionReaderFactory to create a collection reader.
-  - We are adopting the path of using the UriCollectionReader as the reader and using Annotators to populate the CAS
-  Hint 1: Look at the static methods in UriCollectionReader 
+* Create a CollectionReaderDescription object
+  Hint 1: UriCollectionReader.getDescriptionFromFiles(...)
   Hint 2: Arrays.asList
 
-* Build an aggregate engine.
+* Build an aggregate analysis engine.
   There are several reasons to use aggregate engines, that are beyond the scope of this lesson.  For now start by creating a new
   AggregateBuilder
 * You will need to add descriptions of the following analysis engines (Annotators):
   - UriToDocumentTextAnnotator
   - TweetPosReaderAnnotator
   - DumpTweetPos 
+
+
+Lesson 3: Building a ClearTK Annotator
+--------------------------------------
+
+This lesson should teach you to build your own classifier based annotators, by using CleartkAnnotator, Features, and Instances.
+
+* Create a new class called TweetPosTagger. Inherit from CleartkAnnotator<String>
+* Implement the process method
+
+* Things to know
+Instance<String> instance = new Instance<String>()
+instance.addAll(...)
+new Feature(name, value)
+this.isTraining()
+this.dataWriter.write(instance)
+this.classifier.classify(instance)
+
+* Advanced stuff
+CleartkExtractor
+FeatureFunctionExtractor
+
+
+Lesson 4: Evaluation
+--------------------
+
+This lesson will teach you how to organize your code and pipelines for evaluation of NLP components
+
+* Create a new class called TweetPosEval.  Inherit from Evaluation_ImplBase<File, AnnotationStatistics<String>>
+
+* Implement getCollectionReader
+  Hint: Look at your RunDumpTweetPosPipeline and combine it with CollectionReaderFactory.createCollectionReader
+
+* Implement your training pipeline in the train() method
+  Hint 1: This will look very similar to RunDumpTweetPosPipeline
+  Hint 2: Train.main() is what actually packages your extracted data into a model.jar file
+
+  * Things to know:
+    - DefaultDataWriterFactory.PARAM_DATA_WRITER_CLASS_NAME
+    - MaxenStringOutcomeDataWriter.class
+    - DirectoryDataWriterFactory.PARAM_OUTPUT_DIRECTORY,
+
+* Implement your testing/evaluation pipeine in the test() method
+
+
+
+* Implement your
+
 

@@ -13,7 +13,7 @@ import org.uimafit.factory.AnalysisEngineFactory;
 import org.uimafit.factory.CollectionReaderFactory;
 import org.uimafit.pipeline.SimplePipeline;
 
-public class RunTweetPos {
+public class RunDumpTweetPosPipeline {
 
 	
 	public static void main(String[] args) throws UIMAException, IOException  {

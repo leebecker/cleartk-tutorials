@@ -1,4 +1,4 @@
-package edu.colorado.clear.tweetpos;
+package edu.colorado.clear.tutorial.tweetpos;
 
 import java.util.ArrayList;
 import java.util.List;

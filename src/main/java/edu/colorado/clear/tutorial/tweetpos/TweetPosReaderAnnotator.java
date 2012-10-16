@@ -1,4 +1,4 @@
-package edu.colorado.clear.tweetpos;
+package edu.colorado.clear.tutorial.tweetpos;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;

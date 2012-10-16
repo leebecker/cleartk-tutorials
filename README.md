@@ -162,8 +162,5 @@ This lesson will teach you how to organize your code and pipelines for evaluatio
 
 * Implement your testing/evaluation pipeine in the test() method
 
-
-
-* Implement your
-
+* Implement a main method that class your new evaluation class.
 

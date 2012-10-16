@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.uima.UIMAException;
-import org.apache.uima.collection.CollectionReader;
+import org.apache.uima.collection.CollectionReaderDescription;
 import org.cleartk.util.ae.UriToDocumentTextAnnotator;
 import org.cleartk.util.cr.UriCollectionReader;
 import org.uimafit.factory.AggregateBuilder;
 import org.uimafit.factory.AnalysisEngineFactory;
-import org.uimafit.factory.CollectionReaderFactory;
 import org.uimafit.pipeline.SimplePipeline;
 
 public class RunDumpTweetPosPipeline {
@@ -18,8 +17,7 @@ public class RunDumpTweetPosPipeline {
 	
 	public static void main(String[] args) throws UIMAException, IOException  {
 		
-		CollectionReader reader = CollectionReaderFactory.createCollectionReader(
-				UriCollectionReader.getDescriptionFromFiles(Arrays.asList(new File("twpos-data-v0.2.1/train"))));
+		CollectionReaderDescription reader = UriCollectionReader.getDescriptionFromFiles(Arrays.asList(new File("twpos-data-v0.2.1/train")));
 		
 	    AggregateBuilder builder = new AggregateBuilder();
 	    

@@ -31,6 +31,10 @@
   			<groupId>org.cleartk</groupId>
   			<artifactId>cleartk-eval</artifactId>
   		</dependency>
+  		<dependency>
+  			<groupId>org.cleartk</groupId>
+  			<artifactId>cleartk-ml-mallet</artifactId>
+  		</dependency>
   </dependencies>
   <name>ClearTkTutorial</name>
 </project>

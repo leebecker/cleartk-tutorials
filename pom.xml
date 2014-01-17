@@ -3,7 +3,7 @@
   <parent>
     <artifactId>cleartk-release</artifactId>
     <groupId>org.cleartk</groupId>
-    <version>1.2.0</version>
+    <version>1.4.1</version>
   </parent>
   <groupId>edu.colorado.clear.tutorial</groupId>
   <artifactId>ClearTkTutorial</artifactId>
